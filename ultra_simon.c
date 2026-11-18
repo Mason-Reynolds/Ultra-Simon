@@ -10,19 +10,19 @@
 //definitions of the GPIO pins for each feature
 
 #define BB_GP 28
-#define RB_GP 12
+#define RB_GP 4
 #define YB_GP 15
 #define GB_GP 22
 #define BL_GP 27
-#define RL_GP 13
+#define RL_GP 5
 #define YL_GP 14
 #define GL_GP 26
 #define RST_GP 16
-#define TRST_GP 17
-#define TCS_GP 18
-#define TDC_GP 19
-#define TDIN_GP 20
-#define TCLK_GP 21
+#define TRST_GP 12
+#define TCS_GP 9
+#define TDC_GP 13
+#define TDIN_GP 11
+#define TCLK_GP 10
 #define SPK_GP 0
 #define NOTE_GOP_MS 20u
 #define PWM_DIVIDER 64u
@@ -59,8 +59,8 @@ volatile bool received = false;
 volatile bool ready = false;
 volatile bool wrong = false;
 volatile int currSeq[50] = {0}; //store the sequence for a game
-static int buttonsGp[4] = {12, 28, 22, 15}; //rgby order
-static int lightsGp[4] = {13, 27, 26, 14}; //rgby order
+static int buttonsGp[4] = {RB_GP, GB_GP, BB_GP, YB_GP}; //rgby order
+static int lightsGp[4] = {RL_GP, GL_GP, BL_GP, YL_GP}; //rgby order
 static char namesGp[4] = {'R', 'G', 'B', 'Y'};
 char buf[32];
 char buf2[32];
@@ -97,6 +97,9 @@ static void init(){
     gpio_pull_down(YB_GP);
     gpio_pull_down(GB_GP);
     gpio_pull_down(RST_GP);
+    spi_init(spi1, 1000 * 1000);
+    gpio_set_function(TCLK_GP, GPIO_FUNC_SPI);
+    gpio_set_function(TDIN_GP, GPIO_FUNC_SPI);
     tft_spi_init();
 }
 
