@@ -355,13 +355,11 @@ void ReactionGame(){
     uint64_t fastestTime = 500; // Keep track of the fastest time, might end up being stored
     uint64_t slowestTime = 0; // Keep track of the slowest time, might end up being stored
     uint8_t button; // Which color lights up?
-    uint64_t startTime = 0; //Time when the light lights
-    uint64_t endTime = 0; // Time when the button buttons
-    uint64_t totalTime = 0; // Difference between the two
+    riseTim = 0;
+    fallTim = 0;
+    totalTim = 0;
 
     uint64_t ScoreTime = 500; // max allowed time to score in ms
-    bool light = false;
-    bool isPlaying = false;
     
     // TODO: Add audio
     
@@ -383,9 +381,9 @@ void ReactionGame(){
             sleep_ms(1000);
         // execute the rest:
             button = (rand() % 3) + 1;
-            startTime = time_us_64();
-            totalTime = 0;
-            endTime = 0;
+            riseTim = time_us_64();
+            totalTim = 0;
+            fallTim = 0;
 
             while(!light){
             //Light the right color, and poll for any buttons going down
@@ -394,77 +392,77 @@ void ReactionGame(){
             //Final option: If the time is greater than 500, fail
                 switch(button){
                 case 1:
-                    gpio_put(Bl_GP, 1);
-                    gpio_put(Gl_GP, 0);
-                    gpio_put(Rl_GP, 0);
-                    gpio_put(Yl_GP, 0);
+                    gpio_put(BL_GP, 1);
+                    gpio_put(GL_GP, 0);
+                    gpio_put(RL_GP, 0);
+                    gpio_put(YL_GP, 0);
                     if(gpio_get(BB_GP)){
                     //Sucess
-                        endTime = time_us_64();
+                        fallTim = time_us_64();
                         light = true;
                     }
                     break;
                 case 2:
-                    gpio_put(Gl_GP, 1);
-                    gpio_put(Bl_GP, 0);
-                    gpio_put(Yl_GP, 0);
-                    gpio_put(Rl_GP, 0);
+                    gpio_put(GL_GP, 1);
+                    gpio_put(BL_GP, 0);
+                    gpio_put(YL_GP, 0);
+                    gpio_put(RL_GP, 0);
                     if(gpio_get(GB_GP)){
                     // Sucess
-                        endTime = time_us_64();
+                        fallTim = time_us_64();
                         light = true;
                     }
                     break;
                 case 3:
-                    gpio_put(Rl_GP, 1);
-                    gpio_put(Bl_GP, 0);
-                    gpio_put(Gl_GP, 0);
-                    gpio_put(Yl_GP, 0);
-                    if(gpio_get(Rb_GP)){
+                    gpio_put(RL_GP, 1);
+                    gpio_put(BL_GP, 0);
+                    gpio_put(GL_GP, 0);
+                    gpio_put(YL_GP, 0);
+                    if(gpio_get(RB_GP)){
                         // Sucess
-                        endTime = time_us_64();
+                        fallTim = time_us_64();
                         light = true;
                     }
                     break;
                 case 4:
-                    gpio_put(Yl_GP, 1);
-                    gpio_put(Bl_GP, 0);
-                    gpio_put(Gl_GP, 0);
-                    gpio_put(Rl_GP, 0);
+                    gpio_put(YL_GP, 1);
+                    gpio_put(BL_GP, 0);
+                    gpio_put(GL_GP, 0);
+                    gpio_put(RL_GP, 0);
                     if(gpio_get(YB_GP)){
                         // Sucess
-                        endTime = time_us_64();
+                        fallTim = time_us_64();
                         light = true;
                     }
                     break;
                 default:
-                    gpio_put(Gl_GP, 0);
-                    gpio_put(Bl_GP, 0);
-                    gpio_put(Yl_GP, 0);
-                    gpio_put(Rl_GP, 0);
+                    gpio_put(GL_GP, 0);
+                    gpio_put(BL_GP, 0);
+                    gpio_put(YL_GP, 0);
+                    gpio_put(RL_GP, 0);
                     break;
                 }
-                if (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(Rb_GP))
+                if (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
                 {
                     //Fail
                     light = true;
-                    endTime = startTime + 501;
+                    fallTim = riseTim + ScoreTime + 1;
                 }
 
                 //Upon sucess, increment score
                 //
             }
-            while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(Rb_GP)){}
-            totalTime = endTime - startTime;
-            if(totalTime <= ScoreTime){
-                sprintf(buf, "Time: %d", totalTime);
+            while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP)){}
+            totalTim = fallTim - riseTim;
+            if(totalTim <= ScoreTime){
+                sprintf(buf, "Time: %d", totalTim);
                 score ++;
                 sprintf(buf2, "Score: %d", score);
-                if(totalTime > slowestTime){
-                    slowestTime = totalTime;
+                if(totalTim > slowestTime){
+                    slowestTime = totalTim;
                 }
-                if(totalTime < fastestTime){
-                    fastestTime = totalTime;
+                if(totalTim < fastestTime){
+                    fastestTime = totalTim;
                 }
 
                 //Actual display
@@ -474,11 +472,11 @@ void ReactionGame(){
                 sleep_ms(4000);
             }
             else{
-                score = 501;
+                wrong = true;
                 //Shouldn't be able to reach this in game, used since uint doesn't support negative numbers
             }
 
-            if(score <=100 && score != 501){
+            if(score <=100 && !wrong){
                 //Display a win screen
                 drawText(10,60,"Congradulations", ST7735_WHITE, ST7735_BLACK, 2);
                 drawText(40,80, "You Win!", ST7735_WHITE, ST7735_BLACK, 2);
@@ -492,7 +490,7 @@ void ReactionGame(){
                 isPlaying = false;
                 //Go back to main menu
             }
-            else if (score == 501){
+            else if (wrong){
                 drawText(10, 60, "Too Bad", ST7735_WHITE, ST7735_BLACK, 2);
                 drawText(40, 80, "You Lost!", ST7735_WHITE, ST7735_BLACK, 2);
 
