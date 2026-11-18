@@ -471,25 +471,34 @@ void timinSimon(){
     }
 }
 
+void resetReaction(){
+    light = false;
+    started = true;
+    wrong = false;
+
+}
+
 void ReactionGame(){
+
     uint8_t score = 0; // The number of rounds completed
     uint8_t type = 1; // If multiple game modes are used, this can designate them.
-    uint64_t fastestTime = 500; // Keep track of the fastest time, might end up being stored
+    uint64_t fastestTime = 500000; // Keep track of the fastest time, might end up being stored
     uint64_t slowestTime = 0; // Keep track of the slowest time, might end up being stored
     uint8_t button; // Which color lights up?
     riseTim = 0;
     fallTim = 0;
     totalTim = 0;
 
-    uint64_t ScoreTime = 500; // max allowed time to score in ms
+    uint64_t ScoreTime = 500000; // max allowed time to score in us
     
     // TODO: Add audio
     
-    while(isPlaying){
-        if (type = 1){
+    while(started){
+        if (type == 1){
 
         //General game loop:
         //Leadup
+        while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP)) {}
             sleep_ms(1000);
             drawText(10, 60, "5", ST7735_BLUE, ST7735_BLACK, 2);
             sleep_ms(1000);
@@ -502,16 +511,13 @@ void ReactionGame(){
             drawText(10, 60, "1", ST7735_WHITE, ST7735_BLACK, 2);
             sleep_ms(1000);
         // execute the rest:
-            button = (rand() % 3) + 1;
+            button = (rand() % 4) + 1;
             riseTim = time_us_64();
             totalTim = 0;
             fallTim = 0;
 
-            while(!light){
-            //Light the right color, and poll for any buttons going down
-            //If the right button is pressed, wait for the buttons to go up
-            //Otherwise, if the wrong button is pressed, fail
-            //Final option: If the time is greater than 500, fail
+            while(!received){
+            
                 switch(button){
                 case 1:
                     gpio_put(BL_GP, 1);
@@ -521,7 +527,7 @@ void ReactionGame(){
                     if(gpio_get(BB_GP)){
                     //Sucess
                         fallTim = time_us_64();
-                        light = true;
+                        received = true;
                     }
                     break;
                 case 2:
@@ -532,7 +538,7 @@ void ReactionGame(){
                     if(gpio_get(GB_GP)){
                     // Sucess
                         fallTim = time_us_64();
-                        light = true;
+                        received = true;
                     }
                     break;
                 case 3:
@@ -543,7 +549,7 @@ void ReactionGame(){
                     if(gpio_get(RB_GP)){
                         // Sucess
                         fallTim = time_us_64();
-                        light = true;
+                        received = true;
                     }
                     break;
                 case 4:
@@ -554,7 +560,7 @@ void ReactionGame(){
                     if(gpio_get(YB_GP)){
                         // Sucess
                         fallTim = time_us_64();
-                        light = true;
+                        received = true;
                     }
                     break;
                 default:
@@ -564,10 +570,10 @@ void ReactionGame(){
                     gpio_put(RL_GP, 0);
                     break;
                 }
-                if (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
+                if ((gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP)) && !received)
                 {
                     //Fail
-                    light = true;
+                    received = true;
                     fallTim = riseTim + ScoreTime + 1;
                 }
 
@@ -575,11 +581,12 @@ void ReactionGame(){
                 //
             }
             while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP)){}
+
             totalTim = fallTim - riseTim;
             if(totalTim <= ScoreTime){
-                sprintf(buf, "Time: %d", totalTim);
+                sprintf(buf, "Time: %u", totalTim);
                 score ++;
-                sprintf(buf2, "Score: %d", score);
+                sprintf(buf2, "Score: %u", score);
                 if(totalTim > slowestTime){
                     slowestTime = totalTim;
                 }
@@ -595,34 +602,47 @@ void ReactionGame(){
             }
             else{
                 wrong = true;
-                //Shouldn't be able to reach this in game, used since uint doesn't support negative numbers
             }
 
-            if(score <=100 && !wrong){
+            if(score >=100 && !wrong){
                 //Display a win screen
                 drawText(10,60,"Congradulations", ST7735_WHITE, ST7735_BLACK, 2);
                 drawText(40,80, "You Win!", ST7735_WHITE, ST7735_BLACK, 2);
+                
+                sleep_ms(500);
 
-                sprintf(buf, "Fastest Reaction: %d", fastestTime);
-                sprintf(buf2, "Slowest Reaction: %d", slowestTime);
+                sprintf(buf, "Fastest Reaction: %u", fastestTime);
+                sprintf(buf2, "Slowest Reaction: %u", slowestTime);
                 
                 drawText(10, 100, buf, ST7735_WHITE, ST7735_BLACK, 1);
+                
+                sleep_ms(500);
+                
                 drawText(10, 140, buf2, ST7735_WHITE, ST7735_BLACK, 1);
                 
-                isPlaying = false;
+                sleep_ms(5000);
+
+                started = false;
                 //Go back to main menu
             }
             else if (wrong){
                 drawText(10, 60, "Too Bad", ST7735_WHITE, ST7735_BLACK, 2);
                 drawText(40, 80, "You Lost!", ST7735_WHITE, ST7735_BLACK, 2);
 
-                sprintf(buf, "Fastest Reaction: %d", fastestTime);
-                sprintf(buf2, "Slowest Reaction: %d", slowestTime);
+                sleep_ms(500);
+
+                sprintf(buf, "Fastest Reaction: %u", fastestTime);
+                sprintf(buf2, "Slowest Reaction: %u", slowestTime);
 
                 drawText(10, 100, buf, ST7735_WHITE, ST7735_BLACK, 1);
+
+                sleep_ms(500);
+
                 drawText(10, 140, buf2, ST7735_WHITE, ST7735_BLACK, 1);
 
-                isPlaying = false;
+                sleep_ms(5000);
+
+                started = false;
             }
         }
     }
@@ -663,6 +683,7 @@ int main()
             ButtonTest();
         }
         if(gpio_get(GB_GP){
+            resetReaction();
             ReactionGame();
         }
     }
