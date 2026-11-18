@@ -65,6 +65,7 @@ static void init(){
     gpio_pull_down(YB_GP);
     gpio_pull_down(GB_GP);
     gpio_pull_down(RST_GP);
+    tft_spi_init();
 }
 
 void ButtonTest() {
@@ -528,7 +529,9 @@ int main()
     stdio_init_all();
 
     init();
-
+    TFT_BlackTab_Initialize();
+    setTextWrap(true);
+    fillScreen(ST7735_BLACK);
     while (true) {
         if (gpio_get(YB_GP)){
             mainSimon();
