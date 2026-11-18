@@ -24,6 +24,30 @@
 #define TDIN_GP 20
 #define TCLK_GP 21
 #define SPK_GP 0
+#define NOTE_GOP_MS 20u
+#define PWM_DIVIDER 64u
+#define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
+
+//Defining the sound note structure
+// Frequencies in millihertz retain tuning precision without floating-point notes.
+typedef struct {
+    uint32_t frequency_mhz;
+    uint16_t duration_ms;
+} sound_note_t;
+
+//Defining the sound notes for each button and event
+static const uint32_t button_notes[] = {130813, 146832, 164814, 174614};
+static const sound_note_t start_notes[] = {
+    {261626, 100}, {329628, 100}, {391995, 150},
+    {329628, 100}, {261626, 250}
+};
+static const sound_note_t win_notes[] = {
+    {261626, 100}, {329628, 100}, {391995, 100}, {523251, 300}
+};
+static const sound_note_t lose_notes[] = {
+    {349228, 150}, {329628, 150}, {261626, 150}, {246942, 400}
+};
+
 
 //important values
 
@@ -38,6 +62,13 @@ volatile int currSeq[50] = {0}; //store the sequence for a game
 static int buttonsGp[4] = {12, 28, 22, 15}; //rgby order
 static int lightsGp[4] = {13, 27, 26, 14}; //rgby order
 static char namesGp[4] = {'R', 'G', 'B', 'Y'};
+static unsigned int audio_slice;
+static const sound_note_t *melody;
+static size_t melody_count;
+static size_t note_index;
+static bool in_gap;
+static bool button_active;
+static uint64_t deadline_us;
 
 static void init(){
     gpio_init(BL_GP);
@@ -49,6 +80,7 @@ static void init(){
     gpio_init(GB_GP);
     gpio_init(YB_GP);
     gpio_init(RST_GP);
+    gpio_init(SPK_GP);
     gpio_set_dir(BL_GP, GPIO_OUT);
     gpio_set_dir(RL_GP, GPIO_OUT);
     gpio_set_dir(GL_GP, GPIO_OUT);
@@ -104,6 +136,96 @@ void ButtonTest() {
     }
 }
 
+static void mute(void)
+{
+    gpio_put(SPK_GP, false);
+    gpio_set_function(SPK_GP, GPIO_FUNC_SIO);
+    gpio_set_dir(SPK_GP, GPIO_OUT);
+    pwm_set_enabled(audio_slice, false);
+}
+
+static void play_note(uint32_t frequency_mhz, uint16_t duration_ms)
+{
+    mute();
+    uint64_t numerator = (uint64_t)clock_get_hz(clk_sys) * 1000u;
+    uint64_t denominator = (uint64_t)PWM_DIVIDER * frequency_mhz;
+    uint64_t period = (numerator + denominator / 2u) / denominator;
+    if (period < 2u || period > 65536u) {
+        return; // Unsupported clock/frequency combination: remain silent.
+    }
+
+    // Reinitialize while disconnected so old buffered compare/wrap values
+    // cannot leak into the beginning of a new note.
+    pwm_config config = pwm_get_default_config();
+    pwm_config_set_clkdiv(&config, (float)PWM_DIVIDER);
+    pwm_config_set_wrap(&config, (uint16_t)(period - 1u));
+    pwm_init(audio_slice, &config, false);
+    pwm_set_gpio_level(SPK_GP, (uint16_t)(period / 2u));
+    gpio_set_function(SPK_GP, GPIO_FUNC_PWM);
+    pwm_set_enabled(audio_slice, true);
+
+    sleep_ms(duration_ms);
+}
+
+void sound_stop(void)
+{
+    if (!audio_slice) return;
+    melody = NULL;
+    melody_count = 0;
+    note_index = 0;
+    in_gap = false;
+    button_active = false;
+    mute();
+}
+
+void sound_button_start(uint8_t button)
+{
+    if (button >= ARRAY_COUNT(button_notes)) return;
+    sound_stop();
+    play_note(button_notes[button], NOTE_GOP_MS);
+}
+
+void sound_button-stop(uint8_t button)
+{
+    if (button >= ARRAY_COUNT(button_notes)) return;
+    sound_stop();
+}
+
+static void play_melody(const sound_note_t *notes, size_t count)
+{
+    sound_stop();
+    melody = notes;
+    melody_count = count;
+    note_index = 0;
+    in_gap = false;
+    button_active = false;
+}
+
+void sound_start(void) { play_melody(start_notes, ARRAY_COUNT(start_notes)); }
+void sound_win(void) { play_melody(win_notes, ARRAY_COUNT(win_notes)); }
+void sound_lose(void) { play_melody(lose_notes, ARRAY_COUNT(lose_notes)); }
+
+void sound_update(void)
+{
+    if (!initialized || !melody) return;
+    uint64_t now = time_us_64();
+    if (now < deadline_us) return;
+
+    if (!in_gap) {
+        mute_output();
+        if (note_index + 1u == melody_count) {
+            sound_stop(); // No trailing gap after the final note.
+            return;
+        }
+        in_gap = true;
+        deadline_us = now + NOTE_GAP_MS * 1000u;
+    } else {
+        ++note_index;
+        in_gap = false;
+        play_frequency(melody[note_index].frequency_mhz);
+        deadline_us = now + (uint64_t)melody[note_index].duration_ms * 1000u;
+    }
+}
 
 //Include menu structure and graphics here
 
