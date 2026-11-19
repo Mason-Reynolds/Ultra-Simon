@@ -746,16 +746,25 @@ int main()
     fillScreen(ST7735_BLACK);
     while (true)
     {
+        drawText(5, 10, "RECREATION LAD", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 25, "Selection a game:", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 40, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
+        drawText(5, 55, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 70, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
+        drawText(5, 85, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
         if (gpio_get(YB_GP))
         {
+            fillScreen(ST7735_BLACK);
             mainSimon();
         }
         if (gpio_get(RB_GP))
         {
+            fillScreen(ST7735_BLACK);
             timinSimon();
         }
         if (gpio_get(BB_GP))
         {
+            fillScreen(ST7735_BLACK);
             ButtonTest();
         }
         if (gpio_get(GB_GP))
