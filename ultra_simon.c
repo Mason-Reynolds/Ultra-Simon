@@ -191,7 +191,7 @@ void sound_button_start(uint8_t button)
     play_note(button_notes[button], NOTE_GOP_MS);
 }
 
-void sound_button-stop(uint8_t button)
+void sound_button_stop(uint8_t button)
 {
     if (button >= ARRAY_COUNT(button_notes)) return;
     sound_stop();
@@ -213,7 +213,7 @@ void sound_lose(void) { play_melody(lose_notes, ARRAY_COUNT(lose_notes)); }
 
 void sound_update(void)
 {
-    if (!initialized || !melody) return;
+    if (!melody) return;
     uint64_t now = time_us_64();
     if (now < deadline_us) return;
 
@@ -475,7 +475,7 @@ void timinSimon(){
 }
 
 void resetReaction(){
-    light = false;
+    //light = false;
     started = true;
     wrong = false;
 
@@ -685,7 +685,7 @@ int main()
         if(gpio_get(BB_GP)){
             ButtonTest();
         }
-        if(gpio_get(GB_GP){
+        if(gpio_get(GB_GP)){
             resetReaction();
             ReactionGame();
         }
