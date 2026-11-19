@@ -36,7 +36,7 @@ hardware_spi
 st7735
 hardware_adc
 hardware_timer
-
+hardware_pwm
 )
 target_include_directories(ultra_simon PRIVATE
 ${CMAKE_CURRENT_LIST_DIR}
