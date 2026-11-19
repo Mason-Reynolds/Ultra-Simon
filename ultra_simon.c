@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pico/stdlib.h"
 #include "ST7735_TFT.h"
 #include "hardware/spi.h"
 #include "hardware/adc.h"
@@ -8,6 +7,7 @@
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
 #include "math.h"
+#include "hw.h"
 
 //definitions of the GPIO pins for each feature
 
@@ -100,6 +100,10 @@ static void init(){
     gpio_pull_down(YB_GP);
     gpio_pull_down(GB_GP);
     gpio_pull_down(RST_GP);
+    gpio_init(SPK_GP);
+    gpio_set_dir(SPK_GP, GPIO_OUT);
+    gpio_put(SPK_GP, false);
+    audio_slice = pwm_gpio_to_slice_num(SPK_GP);
     spi_init(spi1, 1000 * 1000);
     gpio_set_function(TCLK_GP, GPIO_FUNC_SPI);
     gpio_set_function(TDIN_GP, GPIO_FUNC_SPI);
@@ -148,12 +152,10 @@ void ButtonTest() {
 static void mute(void)
 {
     gpio_put(SPK_GP, false);
-    gpio_set_function(SPK_GP, GPIO_FUNC_SIO);
-    gpio_set_dir(SPK_GP, GPIO_OUT);
     pwm_set_enabled(audio_slice, false);
 }
 
-static void play_note(uint32_t frequency_mhz, uint16_t duration_ms)
+static void start_tone(uint32_t frequency_mhz)
 {
     mute();
     uint64_t numerator = (uint64_t)clock_get_hz(clk_sys) * 1000u;
@@ -172,8 +174,13 @@ static void play_note(uint32_t frequency_mhz, uint16_t duration_ms)
     pwm_set_gpio_level(SPK_GP, (uint16_t)(period / 2u));
     gpio_set_function(SPK_GP, GPIO_FUNC_PWM);
     pwm_set_enabled(audio_slice, true);
+}
 
+static void play_note(uint32_t frequency_mhz, uint16_t duration_ms)
+{
+    start_tone(frequency_mhz);
     sleep_ms(duration_ms);
+    mute();
 }
 
 void sound_stop(void)
@@ -208,6 +215,7 @@ static void play_melody(const sound_note_t *notes, size_t count)
     note_index = 0;
     in_gap = false;
     button_active = false;
+    deadline_us = 0;
 }
 
 void sound_start(void) { play_melody(start_notes, ARRAY_COUNT(start_notes)); }
@@ -220,20 +228,31 @@ void sound_update(void)
     uint64_t now = time_us_64();
     if (now < deadline_us) return;
 
-    if (!in_gap) {
-        mute_output();
-        if (note_index + 1u == melody_count) {
-            sound_stop(); // No trailing gap after the final note.
+    if (in_gap) {
+        ++note_index;
+        if (note_index >= melody_count) {
+            sound_stop();
             return;
         }
-        in_gap = true;
-        deadline_us = now + NOTE_GAP_MS * 1000u;
-    } else {
-        ++note_index;
+        start_tone(melody[note_index].frequency_mhz);
         in_gap = false;
-        play_frequency(melody[note_index].frequency_mhz);
         deadline_us = now + (uint64_t)melody[note_index].duration_ms * 1000u;
+        return;
     }
+
+    if (note_index == 0 && deadline_us == 0) {
+        start_tone(melody[note_index].frequency_mhz);
+        deadline_us = now + (uint64_t)melody[note_index].duration_ms * 1000u;
+        return;
+    }
+
+    mute();
+    if (note_index + 1u >= melody_count) {
+        sound_stop();
+        return;
+    }
+    in_gap = true;
+    deadline_us = now + NOTE_GAP_MS * 1000u;
 }
 
 //Include menu structure and graphics here
@@ -417,41 +436,8 @@ void timinSimon(){
             }
             else{wrong = true;}
 
-            /*if(gpio_get(BB_GP))
-            {
-                if(currSeq[i] == 0){}
-                else{
-                    wrong = true;
-                    //break;
-                }                
-            }
-            if(gpio_get(GB_GP))
-            {
-                if(currSeq[i] == 1){}
-                else{
-                    wrong = true;
-                    //break;
-                }
-            }
-            if(gpio_get(RB_GP))
-            {
-                if(currSeq[i] == 2){}
-                else{
-                    wrong = true;
-                    //break;
-                }
-            }
-            if(wrong == true){
-                break;
-            }*/
 
             sleep_ms(250);
-            /*for (int k = 0; k < 50; ++k){
-                gpio_put(BL_GP, 1);
-                sleep_ms(10);
-                gpio_put(BL_GP, 0);
-                sleep_ms(10);
-            }*/
         }
         if(wrong == true){
             //print "you just lost the game"
@@ -478,7 +464,7 @@ void timinSimon(){
 }
 
 void resetReaction(){
-    //light = false;
+    received = false;
     started = true;
     wrong = false;
 
