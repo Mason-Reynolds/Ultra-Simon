@@ -5,6 +5,8 @@
 #include "hardware/spi.h"
 #include "hardware/adc.h"
 #include "hardware/timer.h"
+#include "hardware/pwm.h"
+#include "hardware/clocks.h"
 #include "math.h"
 
 //definitions of the GPIO pins for each feature
@@ -24,7 +26,7 @@
 #define TDIN_GP 11
 #define TCLK_GP 10
 #define SPK_GP 0
-#define NOTE_GOP_MS 20u
+#define NOTE_GAP_MS 20u
 #define PWM_DIVIDER 64u
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -58,6 +60,7 @@ volatile bool started = false;
 volatile bool received = false;
 volatile bool ready = false;
 volatile bool wrong = false;
+volatile bool light = false;
 volatile int currSeq[50] = {0}; //store the sequence for a game
 static int buttonsGp[4] = {RB_GP, GB_GP, BB_GP, YB_GP}; //rgby order
 static int lightsGp[4] = {RL_GP, GL_GP, BL_GP, YL_GP}; //rgby order
@@ -188,7 +191,7 @@ void sound_button_start(uint8_t button)
 {
     if (button >= ARRAY_COUNT(button_notes)) return;
     sound_stop();
-    play_note(button_notes[button], NOTE_GOP_MS);
+    play_note(button_notes[button], NOTE_GAP_MS);
 }
 
 void sound_button_stop(uint8_t button)
