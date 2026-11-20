@@ -529,7 +529,9 @@ void ReactionGame()
     fallTim = 0;
     totalTim = 0;
 
-    uint64_t ScoreTime = 500000; // max allowed time to score in us
+    uint64_t ScoreTime = 1000000; // max allowed time to score in us
+    // 1000000 is base, drop to 750000 at the end
+    // for 25 rounds, drop 10000 per round
 
     // TODO: Add audio
 
@@ -641,7 +643,7 @@ void ReactionGame()
             gpio_put(BL_GP, 0);
             gpio_put(YL_GP, 0);
             gpio_put(RL_GP, 0);
-            
+
             totalTim = fallTim - riseTim;
             if (totalTim <= ScoreTime)
             {
@@ -662,13 +664,14 @@ void ReactionGame()
                 sleep_ms(1000);
                 drawText(10, 100, buf2, ST7735_WHITE, ST7735_BLACK, 2);
                 sleep_ms(4000);
+                ScoreTime -= 10000;
             }
             else
             {
                 wrong = true;
             }
 
-            if (score >= 100 && !wrong)
+            if (score >= 25 && !wrong)
             {
                 // Display a win screen
                 drawText(10, 60, "Congradulations", ST7735_WHITE, ST7735_BLACK, 2);
@@ -744,10 +747,11 @@ int main()
     TFT_BlackTab_Initialize();
     setTextWrap(true);
     fillScreen(ST7735_BLACK);
+    srand((uint)time_us_32);
     while (true)
     {
         drawText(5, 10, "RECREATION LAD", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 25, "Selection a game:", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 25, "Select a game:", ST7735_WHITE, ST7735_BLACK, 1);
         drawText(5, 40, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
         drawText(5, 55, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
         drawText(5, 70, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
@@ -756,21 +760,25 @@ int main()
         {
             fillScreen(ST7735_BLACK);
             mainSimon();
+            fillScreen(ST7735_BLACK);
         }
         if (gpio_get(RB_GP))
         {
             fillScreen(ST7735_BLACK);
             timinSimon();
+            fillScreen(ST7735_BLACK);
         }
         if (gpio_get(BB_GP))
         {
             fillScreen(ST7735_BLACK);
             ButtonTest();
+            fillScreen(ST7735_BLACK);
         }
         if (gpio_get(GB_GP))
         {
             resetReaction();
             ReactionGame();
+            fillScreen(ST7735_BLACK);
         }
     }
 }
