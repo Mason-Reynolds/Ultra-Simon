@@ -264,7 +264,7 @@ void sound_update(void)
     deadline_us = now + NOTE_GAP_MS * 1000u;
 }
 
-// Include menu structure and graphics here
+
 
 // Include the main Simon game here
 void mainSimon()
@@ -625,7 +625,12 @@ void timinSimon()
         // print round
         if (round == 25)
         {
-            // print "you win"
+            fillScreen(ST7735_BLACK);
+            drawText(5, 50, "Gee Willikers!", ST7735_CYAN, ST7735_BLACK, 1);
+            drawText(5, 60, "You're too good!", ST7735_CYAN, ST7735_BLACK, 1);
+            sleep_ms(3000);
+            fillScreen(ST7735_BLACK);
+            return;
         }
     }
 }
