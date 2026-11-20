@@ -57,6 +57,7 @@ volatile bool received = false;
 volatile bool ready = false;
 volatile bool wrong = false;
 volatile bool light = false;
+volatile bool secondMessage = false;
 volatile int currSeq[50] = {0};                         // store the sequence for a game
 static int buttonsGp[4] = {RB_GP, GB_GP, BB_GP, YB_GP}; // rgby order
 static int lightsGp[4] = {RL_GP, GL_GP, BL_GP, YL_GP};  // rgby order
@@ -270,11 +271,15 @@ void mainSimon()
 {
     drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
     sleep_ms(500);
-    drawText(5, 30, "SIMON COWELL!", ST7735_CYAN, ST7735_BLACK, 1);
+    drawText(5, 30, "SIMON", ST7735_CYAN, ST7735_BLACK, 2);
+    sleep_ms(100);
+    drawText(5, 50, "COWELL!", ST7735_CYAN, ST7735_BLACK, 2);
     sleep_ms(500);
-    drawText(5, 50, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
+    drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
 
     while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+
+    fillScreen(ST7735_BLACK);
 
     for (int k = 0; k < 50; ++k)
     {
@@ -285,7 +290,9 @@ void mainSimon()
 
     for (round = 1; round <= 50; ++round)
     {
-        // simon says...
+        drawText(5, 10, "Simon Cowell Says...", ST7735_MAGENTA, ST7735_BLACK, 1);
+        sleep_ms(800);
+
         for (int i = 0; i < round; ++i)
         {
             // print namesGp[currSeq[i]] to the screen in the color it represents, overwrite after every print, sleep for .5 sec
@@ -293,38 +300,92 @@ void mainSimon()
             if (currSeq[i] == 0)
             {
                 gpio_put(BL_GP, 1);
-                sleep_ms(1000);
+                drawText(5, 50, "BLUE", ST7735_BLUE, ST7735_BLACK, 2);
+                sleep_ms(800);
                 gpio_put(BL_GP, 0);
-                sleep_ms(1000);
+                fillScreen(ST7735_BLACK);
+                sleep_ms(500);
             }
             else if (currSeq[i] == 1)
             {
                 gpio_put(GL_GP, 1);
-                sleep_ms(1000);
+                drawText(5, 50, "GREEN", ST7735_GREEN, ST7735_BLACK, 2);
+                sleep_ms(500);
                 gpio_put(GL_GP, 0);
-                sleep_ms(1000);
+                fillScreen(ST7735_BLACK);
+                sleep_ms(500);
             }
             else if (currSeq[i] == 2)
             {
                 gpio_put(RL_GP, 1);
-                sleep_ms(1000);
+                drawText(5, 50, "RED", ST7735_RED, ST7735_BLACK, 2);
+                sleep_ms(500);
                 gpio_put(RL_GP, 0);
-                sleep_ms(1000);
+                fillScreen(ST7735_BLACK);
+                sleep_ms(500);
             }
             else if (currSeq[i] == 3)
             {
                 gpio_put(YL_GP, 1);
-                sleep_ms(1000);
+                drawText(5, 50, "YELLAH", ST7735_YELLOW, ST7735_BLACK, 2);
+                sleep_ms(500);
                 gpio_put(YL_GP, 0);
-                sleep_ms(1000);
+                fillScreen(ST7735_BLACK);
+                sleep_ms(500);
             }
         }
 
         for (int i = 0; i < round; ++i)
         {
-            // print "enter sequence."
+            drawText(5, 50, "Your Turn:", ST7735_CYAN, ST7735_BLACK, 2);
+            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP) && !gpio_get(RST_GP)){}
 
-            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+            if (gpio_get(RST_GP)){
+                if(secondMessage == false){
+                    fillScreen(ST7735_BLACK);
+                    drawText(5, 50, "Bye!", ST7735_WHITE, ST7735_BLACK, 2);
+                    sleep_ms(2000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(10000);
+                    drawText(5, 50, "What?", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(3000);
+                    fillScreen(ST7735_BLACK);
+                    drawText(5, 50, "What do you want?", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(3000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(5000);
+                    drawText(5, 50, "You're still here?", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(3000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(2000);
+                    drawText(5, 50, "You know this is", ST7735_WHITE, ST7735_BLACK, 1);
+                    drawText(5, 60, "your fault, right?", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(5000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(3000);
+                    drawText(5, 50, "Ok, fine.", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(1500);
+                    fillScreen(ST7735_BLACK);
+                    drawText(5, 50, "But you owe me.", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(4000);
+                    fillScreen(ST7735_BLACK);
+                    secondMessage = true;
+                    return;
+                }
+                if(secondMessage == true){
+                    fillScreen(ST7735_BLACK);
+                    drawText(5, 50, "Oh, come on.", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(3000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(2000);
+                    drawText(5, 50, "You're not very nice.", ST7735_WHITE, ST7735_BLACK, 1);
+                    sleep_ms(3000);
+                    fillScreen(ST7735_BLACK);
+                    sleep_ms(1000);
+                    return;
+                }
+                
+            }
 
             if (gpio_get(BB_GP))
             {
@@ -379,7 +440,25 @@ void mainSimon()
         }
         if (wrong == true)
         {
-            // print "you just lost the game"
+            fillScreen(ST7735_BLACK);
+            drawText(5, 10, "You look a little", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 20, "odd, your dancing is", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 30, "terrible, the sing-", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 40, "ing was horrendous,", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 50, "and you look like", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 60, "one of those", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 70, "creatures that live", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 80, "in the jungle with", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 90, "the massive eyes.", ST7735_RED, ST7735_BLACK, 1);
+            drawText(15, 110, "-Simon Cowell", ST7735_RED, ST7735_BLACK, 1);
+
+            round -=1;
+
+            sprintf(buf, "Score: %d", round);
+
+            drawText(5, 130, buf, ST7735_CYAN, ST7735_BLACK, 1);
+
+    
             for (int i = 0; i < round; ++i)
             {
                 // print the characters (namesGp[currSeq[i]])
@@ -394,12 +473,24 @@ void mainSimon()
             gpio_put(GL_GP, 0);
             gpio_put(YL_GP, 0);
             wrong = false;
+            
+
+            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+            fillScreen(ST7735_BLACK);
             break;
+        }
+
+        else if(wrong != true){
+            drawText(5, 50, "Good, Next", ST7735_MAGENTA, ST7735_BLACK, 2);
+            sleep_ms(1000);
+            fillScreen(ST7735_BLACK);
         }
         // print round
         if (round == 50)
         {
-            // print "you win"
+            drawText(5, 50, "Good Job, You're a Wizard!", ST7735_CYAN, ST7735_BLACK, 1);
+            sleep_ms(1000);
+            fillScreen(ST7735_BLACK);
         }
     }
 }
@@ -536,7 +627,7 @@ void ReactionGame()
     while (started)
     {
         fillScreen(ST7735_BLACK);
-        drawText(5, 10, "RECREATION LAD", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 10, "MONKEY KONG", ST7735_WHITE, ST7735_BLACK, 1);
         resetReaction();
         if (type == 1)
         {
@@ -754,6 +845,7 @@ int main()
         drawText(5, 70, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
         drawText(5, 90, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
         drawText(5, 110, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
+
         if (gpio_get(YB_GP))
         {
             fillScreen(ST7735_BLACK);
