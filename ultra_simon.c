@@ -648,6 +648,7 @@ void ReactionGame()
     riseTim = 0;
     fallTim = 0;
     totalTim = 0;
+    bool didReset;
 
     uint64_t ScoreTime = 1000000; // max allowed time to score in us
     // 1000000 is base, drop to 750000 at the end
@@ -665,6 +666,7 @@ void ReactionGame()
 
             // General game loop:
             // Leadup
+            didReset = false;
             while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
             {
             }
@@ -755,6 +757,73 @@ void ReactionGame()
                 // Upon sucess, increment score
                 //
             }
+            if(gpio_get(RST_GP)){
+                    fillScreen(ST7735_BLACK);
+                    gpio_put(GL_GP, 0);
+                    gpio_put(BL_GP, 0);
+                    gpio_put(YL_GP, 0);
+                    gpio_put(RL_GP, 0);
+                    drawText(5, 10,"Are you sure you want to leave?", ST7735_CYAN, ST7735_BLACK, 2);
+                    drawText(5, 50, "Y", ST7735_BLUE, ST7735_BLACK, 2);
+                    drawText(5, 70, "N", ST7735_RED, ST7735_BLACK, 2);
+                    gpio_put(BL_GP, 1);
+                    gpio_put(RL_GP, 1);
+                    while(!gpio_get(BB_GP) && !gpio_get(RB_GP)){}
+                    gpio_put(BL_GP, 0);
+                    gpio_put(RL_GP, 0);
+                    if(gpio_get(BB_GP)){
+                        fillScreen(ST7735_BLACK);
+                        drawText(5, 10, "Are you really sure?", ST7735_CYAN, ST7735_BLACK, 2);
+                        drawText(5, 50, "Y", ST7735_YELLOW, ST7735_BLACK, 2);
+                        drawText(5, 70, "N", ST7735_GREEN, ST7735_BLACK, 2);
+                        gpio_put(YL_GP, 1);
+                        gpio_put(GL_GP, 1);
+                        while (!gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+                        gpio_put(YL_GP, 0);
+                        gpio_put(GL_GP, 0);
+                        if(gpio_get(YB_GP)){
+                            fillScreen(ST7735_BLACK);
+                            drawText(0, 0,
+                                     "Friends, Romans,     "
+                                     "countrymen, lend me  "
+                                     "your ears; I come to "
+                                     "bury Caesar, not to  "
+                                     "praise him. The evil "
+                                     "that men do lives    "
+                                     "after them; The good "
+                                     "is oft interred with "
+                                     "their bones; So let  "
+                                     "it be with Caesar.   "
+                                     "The noble Brutus hath"
+                                     "told you Caesar was  "
+                                     "ambitious: If it were"
+                                     "so, it was a grievous"
+                                     "fault, And grievously"
+                                     "hath Caesar answer'd "
+                                     "it",
+                                     ST7735_WHITE, ST7735_BLACK, 1);
+                            sleep_ms(10000);
+                            return;
+                        }
+                        else if(gpio_get(GB_GP)){
+                            fillScreen(ST7735_BLACK);
+                            drawText(5, 10, "Well then why'd you press RESET", ST7735_CYAN, ST7735_BLACK, 1);
+                            drawText(5, 30, "and say you were sure?", ST7735_CYAN, ST7735_BLACK, 1);
+                            didReset = true;
+                            drawText(5, 70, "Fine, resetting", ST7735_CYAN, ST7735_BLACK, 1);
+                            drawText(5, 90, "only the round", ST7735_CYAN, ST7735_BLACK, 1);
+                            sleep_ms(3000);
+                        }
+                    }
+                    else if(gpio_get(RB_GP)){
+                        fillScreen(ST7735_BLACK);
+                        drawText(5, 10, "Well then why'd you press RESET?", ST7735_CYAN, ST7735_BLACK, 1);
+                        didReset = true;
+                        drawText(5, 30, "Fine, resetting", ST7735_CYAN, ST7735_BLACK, 1);
+                        drawText(5, 50, "only the round", ST7735_CYAN, ST7735_BLACK, 1);
+                        sleep_ms(3000);
+                    }
+                }
             while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
             {
             }
@@ -765,77 +834,79 @@ void ReactionGame()
             gpio_put(RL_GP, 0);
 
             totalTim = fallTim - riseTim;
-            if (totalTim <= ScoreTime)
-            {
-                sprintf(buf, "Time: %u", totalTim);
-                score++;
-                sprintf(buf2, "Score: %u", score);
-                if (totalTim > slowestTime)
+            if(!didReset){
+                if (totalTim <= ScoreTime)
                 {
-                    slowestTime = totalTim;
+                    sprintf(buf, "Time: %u", totalTim);
+                    score++;
+                    sprintf(buf2, "Score: %u", score);
+                    if (totalTim > slowestTime)
+                    {
+                        slowestTime = totalTim;
+                    }
+                    if (totalTim < fastestTime)
+                    {
+                        fastestTime = totalTim;
+                    }
+    
+                    // Actual display
+                    drawText(10, 60, buf, ST7735_WHITE, ST7735_BLACK, 2);
+                    sleep_ms(1000);
+                    drawText(10, 100, buf2, ST7735_WHITE, ST7735_BLACK, 2);
+                    sleep_ms(4000);
+                    ScoreTime -= 10000;
                 }
-                if (totalTim < fastestTime)
+                else
                 {
-                    fastestTime = totalTim;
+                    wrong = true;
                 }
-
-                // Actual display
-                drawText(10, 60, buf, ST7735_WHITE, ST7735_BLACK, 2);
-                sleep_ms(1000);
-                drawText(10, 100, buf2, ST7735_WHITE, ST7735_BLACK, 2);
-                sleep_ms(4000);
-                ScoreTime -= 10000;
-            }
-            else
-            {
-                wrong = true;
-            }
-
-            if (score >= 25 && !wrong)
-            {
-                // Display a win screen
-                drawText(10, 60, "Congradulations", ST7735_WHITE, ST7735_BLACK, 2);
-                drawText(10, 80, "You Win!", ST7735_WHITE, ST7735_BLACK, 2);
-
-                sleep_ms(500);
-
-                sprintf(buf, "%u", fastestTime);
-                sprintf(buf2, "%u", slowestTime);
-
-                drawText(5, 100, "Fastest Time:", ST7735_WHITE, ST7735_BLACK, 1);
-                drawText(5, 110, buf, ST7735_WHITE, ST7735_BLACK, 1);
-
-                sleep_ms(500);
-
-                drawText(5, 140, "Slowest Time:", ST7735_WHITE, ST7735_BLACK, 1);
-                drawText(5, 150, buf2, ST7735_WHITE, ST7735_BLACK, 1);
-
-                sleep_ms(5000);
-
-                started = false;
-                // Go back to main menu
-            }
-            else if (wrong)
-            {
-                drawText(10, 60, "Too Bad", ST7735_WHITE, ST7735_BLACK, 2);
-                drawText(10, 80, "You Lost!", ST7735_WHITE, ST7735_BLACK, 2);
-
-                sleep_ms(500);
-
-                sprintf(buf, "%u", fastestTime);
-                sprintf(buf2, "%u", slowestTime);
-
-                drawText(5, 100, "Fastest Time:", ST7735_WHITE, ST7735_BLACK, 1);
-                drawText(5, 110, buf, ST7735_WHITE, ST7735_BLACK, 1);
-
-                sleep_ms(500);
-
-                drawText(5, 140, "Slowest Time:", ST7735_WHITE, ST7735_BLACK, 1);
-                drawText(5, 150, buf2, ST7735_WHITE, ST7735_BLACK, 1);
-
-                sleep_ms(5000);
-
-                started = false;
+    
+                if (score >= 25 && !wrong)
+                {
+                    // Display a win screen
+                    drawText(10, 60, "Congradulations", ST7735_WHITE, ST7735_BLACK, 2);
+                    drawText(10, 80, "You Win!", ST7735_WHITE, ST7735_BLACK, 2);
+    
+                    sleep_ms(500);
+    
+                    sprintf(buf, "%u", fastestTime);
+                    sprintf(buf2, "%u", slowestTime);
+    
+                    drawText(5, 100, "Fastest Time:", ST7735_WHITE, ST7735_BLACK, 1);
+                    drawText(5, 110, buf, ST7735_WHITE, ST7735_BLACK, 1);
+    
+                    sleep_ms(500);
+    
+                    drawText(5, 140, "Slowest Time:", ST7735_WHITE, ST7735_BLACK, 1);
+                    drawText(5, 150, buf2, ST7735_WHITE, ST7735_BLACK, 1);
+    
+                    sleep_ms(5000);
+    
+                    started = false;
+                    // Go back to main menu
+                }
+                else if (wrong)
+                {
+                    drawText(10, 60, "Too Bad", ST7735_WHITE, ST7735_BLACK, 2);
+                    drawText(10, 80, "You Lost!", ST7735_WHITE, ST7735_BLACK, 2);
+    
+                    sleep_ms(500);
+    
+                    sprintf(buf, "%u", fastestTime);
+                    sprintf(buf2, "%u", slowestTime);
+    
+                    drawText(5, 100, "Fastest Time:", ST7735_WHITE, ST7735_BLACK, 1);
+                    drawText(5, 110, buf, ST7735_WHITE, ST7735_BLACK, 1);
+    
+                    sleep_ms(500);
+    
+                    drawText(5, 140, "Slowest Time:", ST7735_WHITE, ST7735_BLACK, 1);
+                    drawText(5, 150, buf2, ST7735_WHITE, ST7735_BLACK, 1);
+    
+                    sleep_ms(5000);
+    
+                    started = false;
+                }
             }
         }
     }
