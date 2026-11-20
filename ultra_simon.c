@@ -372,12 +372,6 @@ void mainSimon()
             }
 
             sleep_ms(250);
-            /*for (int k = 0; k < 50; ++k){
-                gpio_put(BL_GP, 1);
-                sleep_ms(10);
-                gpio_put(BL_GP, 0);
-                sleep_ms(10);
-            }*/
         }
         if (wrong == true)
         {
@@ -751,11 +745,11 @@ int main()
     while (true)
     {
         drawText(5, 10, "RECREATION LAD", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 25, "Select a game:", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 40, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
-        drawText(5, 55, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
-        drawText(5, 70, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
-        drawText(5, 85, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
+        drawText(5, 30, "Selection a game:", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 50, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
+        drawText(5, 70, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 90, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
+        drawText(5, 110, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
         if (gpio_get(YB_GP))
         {
             fillScreen(ST7735_BLACK);
