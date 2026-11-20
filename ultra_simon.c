@@ -268,7 +268,14 @@ void sound_update(void)
 // Include the main Simon game here
 void mainSimon()
 {
-    // print "SIMON"
+    drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
+    sleep_ms(500);
+    drawText(5, 30, "SIMON COWELL!", ST7735_CYAN, ST7735_BLACK, 1);
+    sleep_ms(500);
+    drawText(5, 50, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
+
+    while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+
     for (int k = 0; k < 50; ++k)
     {
         currSeq[k] = rand() % 4; // fill the sequence queue with 50 inputs selected randomly from the GPIO array
@@ -317,10 +324,7 @@ void mainSimon()
         {
             // print "enter sequence."
 
-            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP))
-            {
-                // tight_loop_contents();
-            }
+            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
 
             if (gpio_get(BB_GP))
             {
@@ -745,7 +749,7 @@ int main()
     while (true)
     {
         drawText(5, 10, "RECREATION LAD", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 30, "Selection a game:", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 30, "Select an game:", ST7735_WHITE, ST7735_BLACK, 1);
         drawText(5, 50, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
         drawText(5, 70, "Eduardo Bros.", ST7735_RED, ST7735_BLACK, 1);
         drawText(5, 90, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
