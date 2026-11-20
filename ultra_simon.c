@@ -380,8 +380,9 @@ void mainSimon()
                     sleep_ms(2000);
                     drawText(5, 50, "You're not very nice.", ST7735_WHITE, ST7735_BLACK, 1);
                     sleep_ms(3000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(1000);
+                    fillScreen(ST7735_BLUE);
+                    drawText(5, 50, "FatalError", ST7735_YELLOW, ST7735_BLUE, 2);
+                    sleep_ms(10000);
                     return;
                 }
                 
@@ -498,7 +499,8 @@ void mainSimon()
 // Include the reaction time game here
 void timinSimon()
 {
-    // print "Timin' Simon"
+    drawText(5, 10, "Eduardo Bros.", ST7735_CYAN, ST7735_BLACK, 1);
+    
     for (int k = 0; k < 25; ++k)
     {
         currSeq[k] = rand() % 3; // fill the sequence queue with 50 randomly selected time lengths from a set of 3
@@ -508,7 +510,9 @@ void timinSimon()
 
     for (round = 1; round <= 25; ++round)
     {
-        // timin' simon says...
+        fillScreen(ST7735_BLACK);
+        drawText(5, 50, "Listen...", ST7735_YELLOW, ST7735_BLACK, 2);
+
         for (int i = 0; i < round; ++i)
         {
             // print namesGp[currSeq[i]] to the screen in the color it represents, overwrite after every print, sleep for .5 sec
@@ -518,27 +522,32 @@ void timinSimon()
                 gpio_put(YL_GP, 1);
                 sleep_ms(500);
                 gpio_put(YL_GP, 0);
-                sleep_ms(1000);
+                sleep_ms(800);
             }
             else if (currSeq[i] == 1)
             {
                 gpio_put(YL_GP, 1);
                 sleep_ms(1000);
                 gpio_put(YL_GP, 0);
-                sleep_ms(1000);
+                sleep_ms(800);
             }
             else if (currSeq[i] == 2)
             {
                 gpio_put(YL_GP, 1);
                 sleep_ms(1500);
                 gpio_put(YL_GP, 0);
-                sleep_ms(1000);
+                sleep_ms(800);
             }
         }
 
+        fillScreen(ST7735_BLACK);
+        drawText(5, 50, "Press the", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 60, "Yellah", ST7735_YELLOW, ST7735_BLACK, 2);
+        drawText(5, 80, "Button in the same", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 90, "combination of lengths.", ST7735_WHITE, ST7735_BLACK, 1);
+
         for (int i = 0; i < round; ++i)
         {
-            // print "enter sequence."
 
             while (!gpio_get(YB_GP))
             {
@@ -574,7 +583,20 @@ void timinSimon()
         }
         if (wrong == true)
         {
-            // print "you just lost the game"
+            fillScreen(ST7735_BLACK);
+            drawText(5, 10, "Oh, Robert, I'm", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 20, "afraid you just", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 30, "killed my favorite", ST7735_RED, ST7735_BLACK, 1);
+            drawText(5, 40, "song of all time.", ST7735_RED, ST7735_BLACK, 1);
+            drawText(15, 60, "-Simon Cowell", ST7735_RED, ST7735_BLACK, 1);
+
+            round -=1;
+
+            sprintf(buf, "Score: %d", round);
+
+            drawText(5, 130, buf, ST7735_CYAN, ST7735_BLACK, 1);
+
+
             for (int i = 0; i < round; ++i)
             {
                 // print the characters (namesGp[currSeq[i]])
@@ -588,11 +610,20 @@ void timinSimon()
             gpio_put(RL_GP, 0);
             gpio_put(GL_GP, 0);
             gpio_put(YL_GP, 0);
+
+            while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+            
             wrong = false;
             break;
         }
+        else if(wrong == false){
+            fillScreen(ST7735_BLACK);
+            drawText(5, 50, "Good, Next", ST7735_CYAN, ST7735_BLACK, 2);
+            sleep_ms(800);
+
+        }
         // print round
-        if (round == 50)
+        if (round == 25)
         {
             // print "you win"
         }
