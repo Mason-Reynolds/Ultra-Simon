@@ -763,6 +763,7 @@ void hiScores(){
         drawText(5, 120, buf, ST7735_BLUE, ST7735_BLACK, 1);
         while (!gpio_get(RST_GP)){}
         if(gpio_get(RST_GP)){
+            fillScreen(ST7735_BLACK);
             return;
         }
 }
