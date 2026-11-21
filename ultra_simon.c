@@ -27,28 +27,12 @@
 #define TDIN_GP 11
 #define TCLK_GP 10
 #define SPK_GP 0
-#define NOTE_GAP_MS 20u
 #define BUTTON_NOTE_MS 120u
 #define PWM_DIVIDER 64u
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
 
-// Defining the sound note structure
-//  Frequencies in millihertz retain tuning precision without floating-point notes.
-typedef struct
-{
-    uint32_t frequency_mhz;
-    uint16_t duration_ms;
-} sound_note_t;
-
-// Defining the sound notes for each button and event
-static const uint32_t button_notes[] = {130813, 146832, 164814, 174614}; // R, G, B, Y order
-static const sound_note_t start_notes[] = {
-    {261626, 100}, {329628, 100}, {391995, 150}, {329628, 100}, {261626, 250}};
-static const sound_note_t win_notes[] = {
-    {261626, 100}, {329628, 100}, {391995, 100}, {523251, 300}};
-static const sound_note_t lose_notes[] = {
-    {349228, 150}, {329628, 150}, {261626, 150}, {246942, 400}};
-
+// Button frequencies are in millihertz and ordered B, G, Y, R.
+static const uint32_t button_notes[] = {261626, 293664, 329628, 349228}; // B, G, Y, R order
 // important values
 
 volatile uint64_t fallTim = 0;
@@ -64,22 +48,16 @@ volatile bool wrong = false;
 volatile bool light = false;
 volatile bool secondMessage = false;
 volatile int currSeq[50] = {0};                         // store the sequence for a game
-static int buttonsGp[4] = {RB_GP, GB_GP, BB_GP, YB_GP}; // rgby order
+static int buttonsGp[4] = {BB_GP, GB_GP, YB_GP, RB_GP}; // left-to-right: B, G, Y, R
 static int lightsGp[4] = {RL_GP, GL_GP, BL_GP, YL_GP};  // rgby order
 static char namesGp[4] = {'R', 'G', 'B', 'Y'};
 char buf[32];
 char buf2[32];
 static unsigned int audio_slice;
-static const sound_note_t *melody;
-static size_t melody_count;
-static size_t note_index;
-static bool in_gap;
-static bool button_active;
-static uint64_t deadline_us;
 static alarm_id_t button_alarm;
 
 static void button_gpio_irq(uint gpio, uint32_t events);
-void sound_button_start(uint8_t button);
+static void sound_button_play(uint8_t button, uint16_t duration_ms);
 
 static void init()
 {
@@ -109,6 +87,7 @@ static void init()
     gpio_pull_down(RST_GP);
     gpio_init(SPK_GP);
     gpio_set_dir(SPK_GP, GPIO_OUT);
+    gpio_set_drive_strength(SPK_GP, GPIO_DRIVE_STRENGTH_12MA);
     gpio_put(SPK_GP, false);
     audio_slice = pwm_gpio_to_slice_num(SPK_GP);
     gpio_set_irq_enabled_with_callback(BB_GP, GPIO_IRQ_EDGE_RISE, true, button_gpio_irq);
@@ -119,46 +98,6 @@ static void init()
     gpio_set_function(TCLK_GP, GPIO_FUNC_SPI);
     gpio_set_function(TDIN_GP, GPIO_FUNC_SPI);
     tft_spi_init();
-}
-
-void ButtonTest()
-{
-    // if a button is down, light up the LED
-    if (gpio_get(BB_GP))
-    {
-        gpio_put(BL_GP, 1);
-        gpio_put(GL_GP, 0);
-        gpio_put(RL_GP, 0);
-        gpio_put(YL_GP, 0);
-    }
-    if (gpio_get(GB_GP))
-    {
-        gpio_put(GL_GP, 1);
-        gpio_put(BL_GP, 0);
-        gpio_put(YL_GP, 0);
-        gpio_put(RL_GP, 0);
-    }
-    if (gpio_get(RB_GP))
-    {
-        gpio_put(RL_GP, 1);
-        gpio_put(BL_GP, 0);
-        gpio_put(GL_GP, 0);
-        gpio_put(YL_GP, 0);
-    }
-    if (gpio_get(YB_GP))
-    {
-        gpio_put(GL_GP, 0);
-        gpio_put(BL_GP, 0);
-        gpio_put(YL_GP, 1);
-        gpio_put(RL_GP, 0);
-    }
-    if (gpio_get(RST_GP))
-    {
-        gpio_put(GL_GP, 0);
-        gpio_put(BL_GP, 0);
-        gpio_put(YL_GP, 0);
-        gpio_put(RL_GP, 0);
-    }
 }
 
 static void mute(void)
@@ -185,7 +124,7 @@ static void button_gpio_irq(uint gpio, uint32_t events)
     {
         if (gpio == (uint)buttonsGp[button])
         {
-            sound_button_start(button);
+            sound_button_play(button, BUTTON_NOTE_MS);
             return;
         }
     }
@@ -220,82 +159,18 @@ void sound_stop(void)
         cancel_alarm(button_alarm);
         button_alarm = 0;
     }
-    melody = NULL;
-    melody_count = 0;
-    note_index = 0;
-    in_gap = false;
-    button_active = false;
     mute();
 }
 
-void sound_button_start(uint8_t button)
+static void sound_button_play(uint8_t button, uint16_t duration_ms)
 {
     if (button >= ARRAY_COUNT(button_notes))
         return;
     sound_stop();
     start_tone(button_notes[button]);
-    button_alarm = add_alarm_in_ms(BUTTON_NOTE_MS, stop_button_tone, NULL, true);
-}
-
-void sound_button_stop(uint8_t button)
-{
-    if (button >= ARRAY_COUNT(button_notes))
-        return;
-    sound_stop();
-}
-
-static void play_melody(const sound_note_t *notes, size_t count)
-{
-    sound_stop();
-    melody = notes;
-    melody_count = count;
-    note_index = 0;
-    in_gap = false;
-    button_active = false;
-    deadline_us = 0;
-}
-
-void sound_start(void) { play_melody(start_notes, ARRAY_COUNT(start_notes)); }
-void sound_win(void) { play_melody(win_notes, ARRAY_COUNT(win_notes)); }
-void sound_lose(void) { play_melody(lose_notes, ARRAY_COUNT(lose_notes)); }
-
-void sound_update(void)
-{
-    if (!melody)
-        return;
-    uint64_t now = time_us_64();
-    if (now < deadline_us)
-        return;
-
-    if (in_gap)
-    {
-        ++note_index;
-        if (note_index >= melody_count)
-        {
-            sound_stop();
-            return;
-        }
-        start_tone(melody[note_index].frequency_mhz);
-        in_gap = false;
-        deadline_us = now + (uint64_t)melody[note_index].duration_ms * 1000u;
-        return;
-    }
-
-    if (note_index == 0 && deadline_us == 0)
-    {
-        start_tone(melody[note_index].frequency_mhz);
-        deadline_us = now + (uint64_t)melody[note_index].duration_ms * 1000u;
-        return;
-    }
-
-    mute();
-    if (note_index + 1u >= melody_count)
-    {
-        sound_stop();
-        return;
-    }
-    in_gap = true;
-    deadline_us = now + NOTE_GAP_MS * 1000u;
+    // A zero duration leaves the tone running until sound_stop().
+    if (duration_ms > 0)
+        button_alarm = add_alarm_in_ms(duration_ms, stop_button_tone, NULL, true);
 }
 
 
@@ -335,37 +210,41 @@ void mainSimon()
             {
                 gpio_put(BL_GP, 1);
                 drawText(5, 50, "BLUE", ST7735_BLUE, ST7735_BLACK, 2);
-                sleep_ms(800);
+                sound_button_play(0, 500);
+                sleep_ms(500);
                 gpio_put(BL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(300);
             }
             else if (currSeq[i] == 1)
             {
                 gpio_put(GL_GP, 1);
                 drawText(5, 50, "GREEN", ST7735_GREEN, ST7735_BLACK, 2);
+                sound_button_play(1, 500);
                 sleep_ms(500);
                 gpio_put(GL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(300);
             }
             else if (currSeq[i] == 2)
             {
                 gpio_put(RL_GP, 1);
                 drawText(5, 50, "RED", ST7735_RED, ST7735_BLACK, 2);
+                sound_button_play(3, 500);
                 sleep_ms(500);
                 gpio_put(RL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(300);
             }
             else if (currSeq[i] == 3)
             {
                 gpio_put(YL_GP, 1);
                 drawText(5, 50, "YELLAH", ST7735_YELLOW, ST7735_BLACK, 2);
+                sound_button_play(2, 500);
                 sleep_ms(500);
                 gpio_put(YL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(300);
             }
         }
 
@@ -562,6 +441,7 @@ void timinSimon()
             if (currSeq[i] == 0)
             {
                 gpio_put(YL_GP, 1);
+                sound_button_play(2, 500);
                 sleep_ms(500);
                 gpio_put(YL_GP, 0);
                 sleep_ms(800);
@@ -569,6 +449,7 @@ void timinSimon()
             else if (currSeq[i] == 1)
             {
                 gpio_put(YL_GP, 1);
+                sound_button_play(2, 1000);
                 sleep_ms(1000);
                 gpio_put(YL_GP, 0);
                 sleep_ms(800);
@@ -576,6 +457,7 @@ void timinSimon()
             else if (currSeq[i] == 2)
             {
                 gpio_put(YL_GP, 1);
+                sound_button_play(2, 1500);
                 sleep_ms(1500);
                 gpio_put(YL_GP, 0);
                 sleep_ms(800);
@@ -606,12 +488,14 @@ void timinSimon()
 
             if (gpio_get(YB_GP))
             {
+                sound_button_play(2, 0);
                 riseTim = time_us_64();
                 sleep_ms(10);
             }
             while (gpio_get(YB_GP))
             {
             }
+            sound_stop();
             fallTim = time_us_64();
 
             totalTim = fallTim - riseTim;
@@ -704,11 +588,7 @@ void ReactionGame()
     totalTim = 0;
     bool didReset;
 
-    uint64_t ScoreTime = 1000000; // max allowed time to score in us
-    // 1000000 is base, drop to 750000 at the end
-    // for 25 rounds, drop 10000 per round
-
-    // TODO: Add audio
+    uint64_t ScoreTime = 1000000; // 1 s initial window, approaches 200 ms
 
     while (started)
     {
@@ -733,17 +613,17 @@ void ReactionGame()
             while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
             {
             }
-            sleep_ms(1000);
+            sleep_ms(500);
             drawText(10, 60, "5", ST7735_BLUE, ST7735_BLACK, 2);
-            sleep_ms(1000);
+            sleep_ms(500);
             drawText(10, 60, "4", ST7735_GREEN, ST7735_BLACK, 2);
-            sleep_ms(1000);
+            sleep_ms(500);
             drawText(10, 60, "3", ST7735_RED, ST7735_BLACK, 2);
-            sleep_ms(1000);
+            sleep_ms(500);
             drawText(10, 60, "2", ST7735_YELLOW, ST7735_BLACK, 2);
-            sleep_ms(1000);
+            sleep_ms(500);
             drawText(10, 60, "1", ST7735_WHITE, ST7735_BLACK, 2);
-            sleep_ms(1000);
+            sleep_ms(500);
             // execute the rest:
             button = (rand() % 4) + 1;
             riseTim = time_us_64();
@@ -765,6 +645,7 @@ void ReactionGame()
                         // Sucess
                         fallTim = time_us_64();
                         received = true;
+                        ++RHigh;
                     }
                     break;
                 case 2:
@@ -777,6 +658,7 @@ void ReactionGame()
                         // Sucess
                         fallTim = time_us_64();
                         received = true;
+                        ++RHigh;
                     }
                     break;
                 case 3:
@@ -789,6 +671,7 @@ void ReactionGame()
                         // Sucess
                         fallTim = time_us_64();
                         received = true;
+                        ++RHigh;
                     }
                     break;
                 case 4:
@@ -801,6 +684,7 @@ void ReactionGame()
                         // Sucess
                         fallTim = time_us_64();
                         received = true;
+                        ++RHigh;
                     }
                     break;
                 default:
@@ -917,7 +801,8 @@ void ReactionGame()
                     sleep_ms(1000);
                     drawText(10, 100, buf2, ST7735_WHITE, ST7735_BLACK, 2);
                     sleep_ms(4000);
-                    ScoreTime -= 10000;
+                    // Keep 80% of the remaining gap to 200 ms after each success.
+                    ScoreTime = 200000u + (ScoreTime - 200000u) * 4u / 5u;
                 }
                 else
                 {
@@ -992,6 +877,19 @@ void stateReset()
 }
 
 // Include extra code for score saving and extra features here
+void scores()
+{
+    fillScreen(ST7735_BLACK);
+    drawText(5, 10, "High Scores", ST7735_WHITE, ST7735_BLACK, 2);
+    sprintf(buf, "Simon Cowell: %d", SHigh);
+    drawText(5, 30, buf, ST7735_CYAN, ST7735_BLACK, 1);
+    sprintf(buf2, "Eduardo Bros.: %d", THigh);
+    drawText(5, 50, buf2, ST7735_CYAN, ST7735_BLACK, 1);
+    sprintf(buf2, "Monkey Kong: %d", RHigh);
+    drawText(5, 70, buf2, ST7735_CYAN, ST7735_BLACK, 1);
+    sleep_ms(5000);
+}
+
 
 int main()
 {
@@ -1025,7 +923,7 @@ int main()
         }
         if (gpio_get(BB_GP))
         {
-            //Print the High Scores
+            scores();
         }
         if (gpio_get(GB_GP))
         {
