@@ -644,6 +644,16 @@ void resetReaction()
 
 void ReactionGame()
 {
+    fillScreen(ST7735_BLACK);
+        drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
+        sleep_ms(500);
+        drawText(5, 30, "MONKEY", ST7735_CYAN, ST7735_BLACK, 2);
+        sleep_ms(100);
+        drawText(5, 50, "KONG!", ST7735_CYAN, ST7735_BLACK, 2);
+        sleep_ms(500);
+        drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
+        while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+        fillScreen(ST7735_BLACK);
 
     uint8_t score = 0;             // The number of rounds completed
     uint8_t type = 1;              // If multiple game modes are used, this can designate them.
@@ -659,19 +669,6 @@ void ReactionGame()
     // 1000000 is base, drop to 750000 at the end
     // for 25 rounds, drop 10000 per round
 
-    // TODO: Add audio
-
-    fillScreen(ST7735_BLACK);
-        drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
-        sleep_ms(500);
-        drawText(5, 30, "MONKEY", ST7735_CYAN, ST7735_BLACK, 2);
-        sleep_ms(100);
-        drawText(5, 50, "KONG!", ST7735_CYAN, ST7735_BLACK, 2);
-        sleep_ms(500);
-        drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
-
-    while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
-
     while (started)
     {
         
@@ -681,7 +678,7 @@ void ReactionGame()
 
             // General game loop:
             // Leadup
-            didReset = false;
+            //didReset = false;
             while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
             {
             }
@@ -726,7 +723,7 @@ void ReactionGame()
                     gpio_put(RL_GP, 0);
                     if (gpio_get(GB_GP))
                     {
-                        // Sucess
+                        // Success
                         fallTim = time_us_64();
                         received = true;
                     }
@@ -738,7 +735,7 @@ void ReactionGame()
                     gpio_put(YL_GP, 0);
                     if (gpio_get(RB_GP))
                     {
-                        // Sucess
+                        // Success
                         fallTim = time_us_64();
                         received = true;
                     }
@@ -750,7 +747,7 @@ void ReactionGame()
                     gpio_put(RL_GP, 0);
                     if (gpio_get(YB_GP))
                     {
-                        // Sucess
+                        // Succcess
                         fallTim = time_us_64();
                         received = true;
                     }
@@ -865,18 +862,18 @@ void ReactionGame()
 void hiScores(){
     fillScreen(ST7735_BLACK);
         drawText(5, 10, "High Scores", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 10, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
+        drawText(5, 20, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", SHigh);
-        drawText(5, 130, buf, ST7735_YELLOW, ST7735_BLACK, 1);
-        drawText(5, 10, "Eduard Bros", ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 30, buf, ST7735_YELLOW, ST7735_BLACK, 1);
+        drawText(5, 50, "Eduard Bros", ST7735_RED, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", THigh);
-        drawText(5, 130, buf, ST7735_RED, ST7735_BLACK, 1);
-        drawText(5, 10, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
+        drawText(5, 60, buf, ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 80, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", RHigh);
-        drawText(5, 130, buf, ST7735_GREEN, ST7735_BLACK, 1);
-        drawText(5, 10, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
+        drawText(5, 90, buf, ST7735_GREEN, ST7735_BLACK, 1);
+        drawText(5, 110, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", LHigh);
-        drawText(5, 130, buf, ST7735_BLUE, ST7735_BLACK, 1);
+        drawText(5, 120, buf, ST7735_BLUE, ST7735_BLACK, 1);
         while (!gpio_get(RST_GP)){}
         if(gpio_get(RST_GP)){
             return;
