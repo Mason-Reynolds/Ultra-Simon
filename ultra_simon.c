@@ -344,8 +344,8 @@ void mainSimon()
 
             while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
             fillScreen(ST7735_BLACK);
-            if(round-1 > SHigh){
-                SHigh = round-1;
+            if(round > SHigh){
+                SHigh = round;
             }
             break;
         }
@@ -783,21 +783,6 @@ void stateReset()
     }
 }
 
-// Include extra code for score saving and extra features here
-void scores()
-{
-    fillScreen(ST7735_BLACK);
-    drawText(5, 10, "High Scores", ST7735_WHITE, ST7735_BLACK, 2);
-    sprintf(buf, "Simon Cowell: %d", SHigh);
-    drawText(5, 30, buf, ST7735_CYAN, ST7735_BLACK, 1);
-    sprintf(buf2, "Eduardo Bros.: %d", THigh);
-    drawText(5, 50, buf2, ST7735_CYAN, ST7735_BLACK, 1);
-    sprintf(buf2, "Monkey Kong: %d", RHigh);
-    drawText(5, 70, buf2, ST7735_CYAN, ST7735_BLACK, 1);
-    sleep_ms(5000);
-}
-
-
 int main()
 {
     stdio_init_all();
@@ -830,7 +815,7 @@ int main()
         }
         if (gpio_get(BB_GP))
         {
-            scores();
+            hiScores();
         }
         if (gpio_get(GB_GP))
         {
