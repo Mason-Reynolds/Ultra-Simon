@@ -54,6 +54,9 @@ static const sound_note_t lose_notes[] = {
 volatile uint64_t fallTim = 0;
 volatile uint64_t riseTim = 0;
 volatile uint64_t totalTim = 0;
+volatile int SHigh = 0;
+volatile int THigh = 0;
+volatile int RHigh = 0;
 volatile bool started = false;
 volatile bool received = false;
 volatile bool ready = false;
@@ -295,7 +298,7 @@ void sound_update(void)
     deadline_us = now + NOTE_GAP_MS * 1000u;
 }
 
-// Include menu structure and graphics here
+
 
 // Include the main Simon game here
 void mainSimon()
@@ -490,11 +493,6 @@ void mainSimon()
 
             drawText(5, 130, buf, ST7735_CYAN, ST7735_BLACK, 1);
 
-    
-            for (int i = 0; i < round; ++i)
-            {
-                // print the characters (namesGp[currSeq[i]])
-            }
             gpio_put(BL_GP, 1);
             gpio_put(RL_GP, 1);
             gpio_put(GL_GP, 1);
@@ -509,6 +507,9 @@ void mainSimon()
 
             while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
             fillScreen(ST7735_BLACK);
+            if(round-1 > SHigh){
+                SHigh = round-1;
+            }
             break;
         }
 
@@ -523,6 +524,8 @@ void mainSimon()
             drawText(5, 50, "Good Job, You're a Wizard!", ST7735_CYAN, ST7735_BLACK, 1);
             sleep_ms(1000);
             fillScreen(ST7735_BLACK);
+            SHigh = 50;
+            return;
         }
     }
 }
@@ -530,7 +533,15 @@ void mainSimon()
 // Include the reaction time game here
 void timinSimon()
 {
-    drawText(5, 10, "Eduardo Bros.", ST7735_CYAN, ST7735_BLACK, 1);
+    drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
+    sleep_ms(500);
+    drawText(5, 30, "EDUARDO", ST7735_CYAN, ST7735_BLACK, 2);
+    sleep_ms(100);
+    drawText(5, 50, "BROS!", ST7735_CYAN, ST7735_BLACK, 2);
+    sleep_ms(500);
+    drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
+
+    while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
     
     for (int k = 0; k < 25; ++k)
     {
@@ -580,8 +591,17 @@ void timinSimon()
         for (int i = 0; i < round; ++i)
         {
 
-            while (!gpio_get(YB_GP))
+            while (!gpio_get(YB_GP) && !gpio_get(RST_GP))
             {
+            }
+
+            if (gpio_get(RST_GP)){
+                fillScreen(ST7735_BLACK);
+                drawText(5, 50, "Reset Button:", ST7735_CYAN, ST7735_BLACK, 1);
+                drawText(5, 60, "No BS Edition", ST7735_CYAN, ST7735_BLACK, 1);
+                sleep_ms(1000);
+                fillScreen(ST7735_BLACK);
+                return;
             }
 
             if (gpio_get(YB_GP))
@@ -627,11 +647,6 @@ void timinSimon()
 
             drawText(5, 130, buf, ST7735_CYAN, ST7735_BLACK, 1);
 
-
-            for (int i = 0; i < round; ++i)
-            {
-                // print the characters (namesGp[currSeq[i]])
-            }
             gpio_put(BL_GP, 1);
             gpio_put(RL_GP, 1);
             gpio_put(GL_GP, 1);
@@ -643,7 +658,9 @@ void timinSimon()
             gpio_put(YL_GP, 0);
 
             while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
-            
+            if(round-1 > THigh){
+                THigh = round-1;
+            }
             wrong = false;
             break;
         }
@@ -656,7 +673,13 @@ void timinSimon()
         // print round
         if (round == 25)
         {
-            // print "you win"
+            fillScreen(ST7735_BLACK);
+            drawText(5, 50, "Gee Willikers!", ST7735_CYAN, ST7735_BLACK, 1);
+            drawText(5, 60, "You're too good!", ST7735_CYAN, ST7735_BLACK, 1);
+            sleep_ms(3000);
+            fillScreen(ST7735_BLACK);
+            THigh = 25;
+            return;
         }
     }
 }
@@ -690,7 +713,16 @@ void ReactionGame()
     while (started)
     {
         fillScreen(ST7735_BLACK);
-        drawText(5, 10, "MONKEY KONG", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
+        sleep_ms(500);
+        drawText(5, 30, "MONKEY", ST7735_CYAN, ST7735_BLACK, 2);
+        sleep_ms(100);
+        drawText(5, 50, "KONG!", ST7735_CYAN, ST7735_BLACK, 2);
+        sleep_ms(500);
+        drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
+
+        while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+        
         resetReaction();
         if (type == 1)
         {
@@ -993,9 +1025,7 @@ int main()
         }
         if (gpio_get(BB_GP))
         {
-            fillScreen(ST7735_BLACK);
-            ButtonTest();
-            fillScreen(ST7735_BLACK);
+            //Print the High Scores
         }
         if (gpio_get(GB_GP))
         {
