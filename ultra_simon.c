@@ -362,7 +362,7 @@ void mainSimon()
             else if (currSeq[i] == 3)
             {
                 gpio_put(YL_GP, 1);
-                drawText(5, 50, "YELLER", ST7735_YELLOW, ST7735_BLACK, 2);
+                drawText(5, 50, "YELLOW", ST7735_YELLOW, ST7735_BLACK, 2);
                 sleep_ms(400);
                 gpio_put(YL_GP, 0);
                 fillScreen(ST7735_BLACK);
@@ -542,7 +542,7 @@ void timinSimon()
 
         fillScreen(ST7735_BLACK);
         drawText(5, 50, "Press the", ST7735_WHITE, ST7735_BLACK, 1);
-        drawText(5, 60, "Yellah", ST7735_YELLOW, ST7735_BLACK, 2);
+        drawText(5, 60, "Yellow", ST7735_YELLOW, ST7735_BLACK, 2);
         drawText(5, 80, "Button in the same", ST7735_WHITE, ST7735_BLACK, 1);
         drawText(5, 90, "combination of lengths.", ST7735_WHITE, ST7735_BLACK, 1);
 
@@ -862,6 +862,27 @@ void ReactionGame()
     }
 }
 
+void hiScores(){
+    fillScreen(ST7735_BLACK);
+        drawText(5, 10, "High Scores", ST7735_WHITE, ST7735_BLACK, 1);
+        drawText(5, 10, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
+        sprintf(buf, "Score: %d", SHigh);
+        drawText(5, 130, buf, ST7735_YELLOW, ST7735_BLACK, 1);
+        drawText(5, 10, "Eduard Bros", ST7735_RED, ST7735_BLACK, 1);
+        sprintf(buf, "Score: %d", THigh);
+        drawText(5, 130, buf, ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 10, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
+        sprintf(buf, "Score: %d", RHigh);
+        drawText(5, 130, buf, ST7735_GREEN, ST7735_BLACK, 1);
+        drawText(5, 10, "Legend of Triangle", ST7735_BLUE, ST7735_BLACK, 1);
+        sprintf(buf, "Score: %d", LHigh);
+        drawText(5, 130, buf, ST7735_BLUE, ST7735_BLACK, 1);
+        while (!gpio_get(RST_GP)){}
+        if(gpio_get(RST_GP)){
+            return;
+        }
+}
+
 // Include the button timing game here
 void lengthPress()
 {
@@ -912,7 +933,9 @@ int main()
         }
         if (gpio_get(BB_GP))
         {
-            //Print the High Scores
+            LHigh += 1;
+            hiScores();
+
         }
         if (gpio_get(GB_GP))
         {
