@@ -55,6 +55,7 @@ volatile uint64_t totalTim = 0;
 volatile int SHigh = 0;
 volatile int THigh = 0;
 volatile int RHigh = 0;
+volatile int LHigh = 0;
 volatile bool started = false;
 volatile bool received = false;
 volatile bool ready = false;
@@ -304,92 +305,49 @@ void mainSimon()
             {
                 gpio_put(BL_GP, 1);
                 drawText(5, 50, "BLUE", ST7735_BLUE, ST7735_BLACK, 2);
-                sleep_ms(800);
+                sleep_ms(400);
                 gpio_put(BL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(200);
             }
             else if (currSeq[i] == 1)
             {
                 gpio_put(GL_GP, 1);
                 drawText(5, 50, "GREEN", ST7735_GREEN, ST7735_BLACK, 2);
-                sleep_ms(500);
+                sleep_ms(400);
                 gpio_put(GL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(200);
             }
             else if (currSeq[i] == 2)
             {
                 gpio_put(RL_GP, 1);
                 drawText(5, 50, "RED", ST7735_RED, ST7735_BLACK, 2);
-                sleep_ms(500);
+                sleep_ms(400);
                 gpio_put(RL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(200);
             }
             else if (currSeq[i] == 3)
             {
                 gpio_put(YL_GP, 1);
-                drawText(5, 50, "YELLAH", ST7735_YELLOW, ST7735_BLACK, 2);
-                sleep_ms(500);
+                drawText(5, 50, "YELLER", ST7735_YELLOW, ST7735_BLACK, 2);
+                sleep_ms(400);
                 gpio_put(YL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(500);
+                sleep_ms(200);
             }
         }
 
         for (int i = 0; i < round; ++i)
         {
             drawText(5, 50, "Your Turn:", ST7735_CYAN, ST7735_BLACK, 2);
+
             while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP) && !gpio_get(RST_GP)){}
 
             if (gpio_get(RST_GP)){
-                if(secondMessage == false){
-                    fillScreen(ST7735_BLACK);
-                    drawText(5, 50, "Bye!", ST7735_WHITE, ST7735_BLACK, 2);
-                    sleep_ms(2000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(10000);
-                    drawText(5, 50, "What?", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(3000);
-                    fillScreen(ST7735_BLACK);
-                    drawText(5, 50, "What do you want?", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(3000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(5000);
-                    drawText(5, 50, "You're still here?", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(3000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(2000);
-                    drawText(5, 50, "You know this is", ST7735_WHITE, ST7735_BLACK, 1);
-                    drawText(5, 60, "your fault, right?", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(5000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(3000);
-                    drawText(5, 50, "Ok, fine.", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(1500);
-                    fillScreen(ST7735_BLACK);
-                    drawText(5, 50, "But you owe me.", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(4000);
-                    fillScreen(ST7735_BLACK);
-                    secondMessage = true;
                     return;
                 }
-                if(secondMessage == true){
-                    fillScreen(ST7735_BLACK);
-                    drawText(5, 50, "Oh, come on.", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(3000);
-                    fillScreen(ST7735_BLACK);
-                    sleep_ms(2000);
-                    drawText(5, 50, "You're not very nice.", ST7735_WHITE, ST7735_BLACK, 1);
-                    sleep_ms(3000);
-                    fillScreen(ST7735_BLUE);
-                    drawText(5, 50, "FatalError", ST7735_YELLOW, ST7735_BLUE, 2);
-                    sleep_ms(10000);
-                    return;
-                }
-                
-            }
 
             if (gpio_get(BB_GP))
             {
@@ -490,7 +448,7 @@ void mainSimon()
         // print round
         if (round == 50)
         {
-            drawText(5, 50, "Good Job, You're a Wizard!", ST7735_CYAN, ST7735_BLACK, 1);
+            drawText(5, 50, "Great Job, You're a Wizard!", ST7735_CYAN, ST7735_BLACK, 1);
             sleep_ms(1000);
             fillScreen(ST7735_BLACK);
             SHigh = 50;
@@ -560,16 +518,9 @@ void timinSimon()
         for (int i = 0; i < round; ++i)
         {
 
-            while (!gpio_get(YB_GP) && !gpio_get(RST_GP))
-            {
-            }
+            while (!gpio_get(YB_GP) && !gpio_get(RST_GP)){}
 
             if (gpio_get(RST_GP)){
-                fillScreen(ST7735_BLACK);
-                drawText(5, 50, "Reset Button:", ST7735_CYAN, ST7735_BLACK, 1);
-                drawText(5, 60, "No BS Edition", ST7735_CYAN, ST7735_BLACK, 1);
-                sleep_ms(1000);
-                fillScreen(ST7735_BLACK);
                 return;
             }
 
@@ -679,9 +630,7 @@ void ReactionGame()
 
     // TODO: Add audio
 
-    while (started)
-    {
-        fillScreen(ST7735_BLACK);
+    fillScreen(ST7735_BLACK);
         drawText(5, 10, "Welcome To", ST7735_WHITE, ST7735_BLACK, 2);
         sleep_ms(500);
         drawText(5, 30, "MONKEY", ST7735_CYAN, ST7735_BLACK, 2);
@@ -690,7 +639,10 @@ void ReactionGame()
         sleep_ms(500);
         drawText(5, 70, "Press any button to play.", ST7735_MAGENTA, ST7735_BLACK, 1);
 
-        while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+    while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
+
+    while (started)
+    {
         
         resetReaction();
         if (type == 1)
@@ -790,75 +742,10 @@ void ReactionGame()
                 //
             }
             if(gpio_get(RST_GP)){
-                    fillScreen(ST7735_BLACK);
-                    gpio_put(GL_GP, 0);
-                    gpio_put(BL_GP, 0);
-                    gpio_put(YL_GP, 0);
-                    gpio_put(RL_GP, 0);
-                    drawText(5, 10,"Are you sure you want to leave?", ST7735_CYAN, ST7735_BLACK, 2);
-                    drawText(5, 50, "Y", ST7735_BLUE, ST7735_BLACK, 2);
-                    drawText(5, 70, "N", ST7735_RED, ST7735_BLACK, 2);
-                    gpio_put(BL_GP, 1);
-                    gpio_put(RL_GP, 1);
-                    while(!gpio_get(BB_GP) && !gpio_get(RB_GP)){}
-                    gpio_put(BL_GP, 0);
-                    gpio_put(RL_GP, 0);
-                    if(gpio_get(BB_GP)){
-                        fillScreen(ST7735_BLACK);
-                        drawText(5, 10, "Are you really sure?", ST7735_CYAN, ST7735_BLACK, 2);
-                        drawText(5, 50, "Y", ST7735_YELLOW, ST7735_BLACK, 2);
-                        drawText(5, 70, "N", ST7735_GREEN, ST7735_BLACK, 2);
-                        gpio_put(YL_GP, 1);
-                        gpio_put(GL_GP, 1);
-                        while (!gpio_get(GB_GP) && !gpio_get(YB_GP)){}
-                        gpio_put(YL_GP, 0);
-                        gpio_put(GL_GP, 0);
-                        if(gpio_get(YB_GP)){
-                            fillScreen(ST7735_BLACK);
-                            drawText(0, 0,
-                                     "Friends, Romans,     "
-                                     "countrymen, lend me  "
-                                     "your ears; I come to "
-                                     "bury Caesar, not to  "
-                                     "praise him. The evil "
-                                     "that men do lives    "
-                                     "after them; The good "
-                                     "is oft interred with "
-                                     "their bones; So let  "
-                                     "it be with Caesar.   "
-                                     "The noble Brutus hath"
-                                     "told you Caesar was  "
-                                     "ambitious: If it were"
-                                     "so, it was a grievous"
-                                     "fault, And grievously"
-                                     "hath Caesar answer'd "
-                                     "it",
-                                     ST7735_WHITE, ST7735_BLACK, 1);
-                            sleep_ms(10000);
-                            return;
-                        }
-                        else if(gpio_get(GB_GP)){
-                            fillScreen(ST7735_BLACK);
-                            drawText(5, 10, "Well then why'd you press RESET", ST7735_CYAN, ST7735_BLACK, 1);
-                            drawText(5, 30, "and say you were sure?", ST7735_CYAN, ST7735_BLACK, 1);
-                            didReset = true;
-                            drawText(5, 70, "Fine, resetting", ST7735_CYAN, ST7735_BLACK, 1);
-                            drawText(5, 90, "only the round", ST7735_CYAN, ST7735_BLACK, 1);
-                            sleep_ms(3000);
-                        }
-                    }
-                    else if(gpio_get(RB_GP)){
-                        fillScreen(ST7735_BLACK);
-                        drawText(5, 10, "Well then why'd you press RESET?", ST7735_CYAN, ST7735_BLACK, 1);
-                        didReset = true;
-                        drawText(5, 30, "Fine, resetting", ST7735_CYAN, ST7735_BLACK, 1);
-                        drawText(5, 50, "only the round", ST7735_CYAN, ST7735_BLACK, 1);
-                        sleep_ms(3000);
-                    }
-                }
-            while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP))
-            {
+                   return;
             }
+
+            while (gpio_get(BB_GP) || gpio_get(GB_GP) || gpio_get(YB_GP) || gpio_get(RB_GP)){}
 
             gpio_put(GL_GP, 0);
             gpio_put(BL_GP, 0);
