@@ -6,6 +6,7 @@
 #include "hardware/timer.h"
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
+#include "pico/time.h"
 #include "math.h"
 #include "hw.h"
 
@@ -27,6 +28,7 @@
 #define TCLK_GP 10
 #define SPK_GP 0
 #define NOTE_GAP_MS 20u
+#define BUTTON_NOTE_MS 120u
 #define PWM_DIVIDER 64u
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -39,7 +41,7 @@ typedef struct
 } sound_note_t;
 
 // Defining the sound notes for each button and event
-static const uint32_t button_notes[] = {130813, 146832, 164814, 174614};
+static const uint32_t button_notes[] = {130813, 146832, 164814, 174614}; // R, G, B, Y order
 static const sound_note_t start_notes[] = {
     {261626, 100}, {329628, 100}, {391995, 150}, {329628, 100}, {261626, 250}};
 static const sound_note_t win_notes[] = {
@@ -75,6 +77,10 @@ static size_t note_index;
 static bool in_gap;
 static bool button_active;
 static uint64_t deadline_us;
+static alarm_id_t button_alarm;
+
+static void button_gpio_irq(uint gpio, uint32_t events);
+void sound_button_start(uint8_t button);
 
 static void init()
 {
@@ -106,6 +112,10 @@ static void init()
     gpio_set_dir(SPK_GP, GPIO_OUT);
     gpio_put(SPK_GP, false);
     audio_slice = pwm_gpio_to_slice_num(SPK_GP);
+    gpio_set_irq_enabled_with_callback(BB_GP, GPIO_IRQ_EDGE_RISE, true, button_gpio_irq);
+    gpio_set_irq_enabled(RB_GP, GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(GB_GP, GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(YB_GP, GPIO_IRQ_EDGE_RISE, true);
     spi_init(spi1, 1000 * 1000);
     gpio_set_function(TCLK_GP, GPIO_FUNC_SPI);
     gpio_set_function(TDIN_GP, GPIO_FUNC_SPI);
@@ -158,6 +168,30 @@ static void mute(void)
     pwm_set_enabled(audio_slice, false);
 }
 
+static int64_t stop_button_tone(alarm_id_t alarm, void *user_data)
+{
+    (void)alarm;
+    (void)user_data;
+    button_alarm = 0;
+    mute();
+    return 0;
+}
+
+static void button_gpio_irq(uint gpio, uint32_t events)
+{
+    if (!(events & GPIO_IRQ_EDGE_RISE))
+        return;
+
+    for (uint8_t button = 0; button < ARRAY_COUNT(buttonsGp); ++button)
+    {
+        if (gpio == (uint)buttonsGp[button])
+        {
+            sound_button_start(button);
+            return;
+        }
+    }
+}
+
 static void start_tone(uint32_t frequency_mhz)
 {
     mute();
@@ -180,17 +214,13 @@ static void start_tone(uint32_t frequency_mhz)
     pwm_set_enabled(audio_slice, true);
 }
 
-static void play_note(uint32_t frequency_mhz, uint16_t duration_ms)
-{
-    start_tone(frequency_mhz);
-    sleep_ms(duration_ms);
-    mute();
-}
-
 void sound_stop(void)
 {
-    if (!audio_slice)
-        return;
+    if (button_alarm > 0)
+    {
+        cancel_alarm(button_alarm);
+        button_alarm = 0;
+    }
     melody = NULL;
     melody_count = 0;
     note_index = 0;
@@ -204,7 +234,8 @@ void sound_button_start(uint8_t button)
     if (button >= ARRAY_COUNT(button_notes))
         return;
     sound_stop();
-    play_note(button_notes[button], NOTE_GAP_MS);
+    start_tone(button_notes[button]);
+    button_alarm = add_alarm_in_ms(BUTTON_NOTE_MS, stop_button_tone, NULL, true);
 }
 
 void sound_button_stop(uint8_t button)
