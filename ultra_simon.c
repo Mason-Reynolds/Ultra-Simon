@@ -565,6 +565,7 @@ void ReactionGame()
             {
             }
             sleep_ms(500);
+            fillScreen(ST7735_BLACK);
             drawText(10, 60, "5", ST7735_BLUE, ST7735_BLACK, 2);
             sleep_ms(500);
             drawText(10, 60, "4", ST7735_GREEN, ST7735_BLACK, 2);
