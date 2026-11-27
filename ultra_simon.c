@@ -211,41 +211,41 @@ void mainSimon()
             {
                 gpio_put(BL_GP, 1);
                 drawText(5, 50, "BLUE", ST7735_BLUE, ST7735_BLACK, 2);
-                sound_button_play(0, 500);
-                sleep_ms(500);
+                sound_button_play(0, 300);
+                sleep_ms(300);
                 gpio_put(BL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(200);
+                sleep_ms(100);
             }
             else if (currSeq[i] == 1)
             {
                 gpio_put(GL_GP, 1);
                 drawText(5, 50, "GREEN", ST7735_GREEN, ST7735_BLACK, 2);
-                sound_button_play(1, 500);
-                sleep_ms(500);
+                sound_button_play(1, 300);
+                sleep_ms(300);
                 gpio_put(GL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(200);
+                sleep_ms(100);
             }
             else if (currSeq[i] == 2)
             {
                 gpio_put(RL_GP, 1);
                 drawText(5, 50, "RED", ST7735_RED, ST7735_BLACK, 2);
-                sound_button_play(3, 500);
-                sleep_ms(500);
+                sound_button_play(3, 300);
+                sleep_ms(300);
                 gpio_put(RL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(200);
+                sleep_ms(100);
             }
             else if (currSeq[i] == 3)
             {
                 gpio_put(YL_GP, 1);
                 drawText(5, 50, "YELLOW", ST7735_YELLOW, ST7735_BLACK, 2);
-                sound_button_play(2, 500);
-                sleep_ms(400);
+                sound_button_play(2, 300);
+                sleep_ms(300);
                 gpio_put(YL_GP, 0);
                 fillScreen(ST7735_BLACK);
-                sleep_ms(200);
+                sleep_ms(100);
             }
         }
 
@@ -308,7 +308,7 @@ void mainSimon()
                 break;
             }
 
-            sleep_ms(250);
+            sleep_ms(100);
         }
         if (wrong == true)
         {
