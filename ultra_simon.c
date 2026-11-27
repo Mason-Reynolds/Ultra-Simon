@@ -269,7 +269,9 @@ void mainSimon()
                     wrong = true;
                     // break;
                 }
+                sleep_ms(10);
             }
+            while (gpio_get(BB_GP)){}
             if (gpio_get(GB_GP))
             {
                 if (currSeq[i] == 1)
@@ -280,7 +282,9 @@ void mainSimon()
                     wrong = true;
                     // break;
                 }
+                sleep_ms(10);
             }
+            while (gpio_get(GB_GP)){}
             if (gpio_get(RB_GP))
             {
                 if (currSeq[i] == 2)
@@ -291,7 +295,9 @@ void mainSimon()
                     wrong = true;
                     // break;
                 }
+                sleep_ms(10);
             }
+            while (gpio_get(RB_GP)){}
             if (gpio_get(YB_GP))
             {
                 if (currSeq[i] == 3)
@@ -302,7 +308,9 @@ void mainSimon()
                     wrong = true;
                     // break;
                 }
+                sleep_ms(10);
             }
+            while (gpio_get(YB_GP)){}
             if (wrong == true)
             {
                 break;
@@ -494,7 +502,7 @@ void timinSimon()
 
             while (!gpio_get(BB_GP) && !gpio_get(RB_GP) && !gpio_get(GB_GP) && !gpio_get(YB_GP)){}
             if(round-1 > THigh){
-                THigh = round-1;
+                THigh = round;
             }
             wrong = false;
             break;
@@ -753,7 +761,7 @@ void hiScores(){
         drawText(5, 20, "Simon Cowell", ST7735_YELLOW, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", SHigh);
         drawText(5, 30, buf, ST7735_YELLOW, ST7735_BLACK, 1);
-        drawText(5, 50, "Eduard Bros", ST7735_RED, ST7735_BLACK, 1);
+        drawText(5, 50, "Eduardo Bros", ST7735_RED, ST7735_BLACK, 1);
         sprintf(buf, "Score: %d", THigh);
         drawText(5, 60, buf, ST7735_RED, ST7735_BLACK, 1);
         drawText(5, 80, "Monkey Kong", ST7735_GREEN, ST7735_BLACK, 1);
@@ -817,6 +825,7 @@ int main()
         }
         if (gpio_get(BB_GP))
         {
+            LHigh += 1;
             hiScores();
         }
         if (gpio_get(GB_GP))
